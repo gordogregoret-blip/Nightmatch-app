@@ -6,7 +6,7 @@ import { getActiveVenues, getTonightForVenue, checkIn, getCheckinStatus } from "
 
 // Carga inmediata con default BA, actualiza si geo responde en <3s
 function useLocation() {
-  const [loc, setLoc] = useState({ lat: -34.6037, lng: -58.3816 }) // Buenos Aires default
+  const [loc, setLoc] = useState({ lat: -29.1447, lng: -59.6458 }) // Reconquista default
   useEffect(() => {
     if (!navigator.geolocation) return
     const timer = setTimeout(() => {}, 0) // trigger immediately

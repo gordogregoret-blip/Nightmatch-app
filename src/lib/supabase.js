@@ -24,10 +24,23 @@ export const updateProfile = (userId, data) =>
   supabase.from('profiles').update(data).eq('id', userId)
 
 // ── Venues ────────────────────────────────────────────────
-export const getActiveVenues = async (lat, lng, radiusM = 20000) => {
-  const { data, error } = await supabase
-    .rpc('get_active_venues_nearby', { p_lat: lat, p_lng: lng, p_radius_m: radiusM })
-  return { data, error }
+// Haversine distance in meters between two lat/lng points
+function haversineM(lat1, lng1, lat2, lng2) {
+  const R = 6371000
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLng = (lng2 - lng1) * Math.PI / 180
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+}
+
+export const getActiveVenues = async (lat, lng, radiusM = 50000) => {
+  const { data, error } = await supabase.from('venues').select('*')
+  if (error || !data) return { data: null, error }
+  const filtered = data
+    .map(v => ({ ...v, distance_m: haversineM(lat, lng, v.lat, v.lng) }))
+    .filter(v => v.distance_m <= radiusM)
+    .sort((a, b) => a.distance_m - b.distance_m)
+  return { data: filtered, error: null }
 }
 
 export const getVenueById = async (id) => {
