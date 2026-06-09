@@ -20,7 +20,12 @@ export default function ProfilePage() {
       const { data } = await getProfile(user.id)
       if (data) {
         setProfile(data)
-        setForm({ name: data.name || "", bio: data.bio || "", music_prefs: data.music_prefs || [], drink_prefs: data.drink_prefs || [] })
+        setForm({
+          name: data.name || "",
+          bio: data.bio || "",
+          music_prefs: data.music_prefs || [],
+          drink_prefs: data.drink_prefs || [],
+        })
       }
     }
     load()
@@ -41,10 +46,6 @@ export default function ProfilePage() {
     setSaving(false)
   }
 
-  const handleLogout = async () => {
-    await signOut()
-  }
-
   if (!profile) return (
     <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}}>
       <div className="spinner"/>
@@ -56,39 +57,48 @@ export default function ProfilePage() {
       <div className="scroll-area">
         {/* Hero */}
         <div style={{
-          padding:"60px 20px 32px", textAlign:"center",
-          background:"radial-gradient(ellipse at 50% 0%, rgba(168,85,247,0.2) 0%, transparent 70%)",
+          padding:"60px 22px 32px", textAlign:"center",
+          background:"radial-gradient(ellipse 80% 50% at 50% 0%, rgba(233,30,140,0.15) 0%, transparent 70%)",
         }}>
-          <div className="avatar" style={{
-            width:88, height:88, fontSize:36,
-            background:"linear-gradient(135deg, var(--purple), var(--pink))",
-            margin:"0 auto 16px",
-          }}>
-            {(profile.name || "?")[0].toUpperCase()}
+          {/* Avatar with glow */}
+          <div style={{ position:"relative", display:"inline-block", marginBottom:20 }}>
+            <div className="avatar" style={{
+              width:96, height:96, fontSize:38,
+              background:"linear-gradient(135deg, var(--pink), var(--purple))",
+              boxShadow:"var(--glow-pink)",
+            }}>
+              {(profile.name || "?")[0].toUpperCase()}
+            </div>
           </div>
-          <div style={{ fontSize:24, fontWeight:900, letterSpacing:"-0.6px" }}>{profile.name}</div>
-          <div style={{ fontSize:14, color:"var(--gray)", marginTop:4 }}>
-            {profile.age} años · {user.email}
+
+          <div style={{ fontSize:26, fontWeight:900, letterSpacing:-0.8 }}>{profile.name}</div>
+          <div style={{ fontSize:13, color:"var(--grayL)", marginTop:6 }}>
+            {profile.age} anos · {user.email}
           </div>
           {profile.bio && (
-            <div style={{ fontSize:13, color:"var(--grayL)", marginTop:12, lineHeight:1.7, maxWidth:280, margin:"12px auto 0" }}>
+            <div style={{ fontSize:14, color:"var(--grayL)", marginTop:14, lineHeight:1.8, maxWidth:280, margin:"14px auto 0" }}>
               {profile.bio}
             </div>
           )}
+
           <button onClick={() => setEditing(true)} style={{
-            marginTop:20, padding:"10px 24px",
-            background:"var(--surface2)", border:"1px solid var(--border)",
-            borderRadius:14, color:"var(--grayXL)", fontSize:13, fontWeight:600,
+            marginTop:22, padding:"11px 28px",
+            background:"var(--surface2)",
+            border:"1px solid var(--border2)",
+            borderRadius:16, color:"var(--grayXL)",
+            fontSize:13, fontWeight:700,
           }}>
             Editar perfil
           </button>
         </div>
 
+        <div className="neon-line" style={{ margin:"0 22px" }} />
+
         {/* Prefs */}
-        <div style={{ padding:"0 16px 24px" }}>
+        <div style={{ padding:"8px 20px 32px" }}>
           {profile.music_prefs?.length > 0 && (
-            <div style={{ marginBottom:24 }}>
-              <div className="section-label" style={{ paddingLeft:0 }}>Musica</div>
+            <div style={{ marginBottom:28 }}>
+              <div className="section-label" style={{ paddingLeft:0 }}>🎵 Musica</div>
               <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
                 {profile.music_prefs.map(m => (
                   <span key={m} className="chip active">{m}</span>
@@ -96,9 +106,10 @@ export default function ProfilePage() {
               </div>
             </div>
           )}
+
           {profile.drink_prefs?.length > 0 && (
-            <div style={{ marginBottom:32 }}>
-              <div className="section-label" style={{ paddingLeft:0 }}>Bebidas</div>
+            <div style={{ marginBottom:36 }}>
+              <div className="section-label" style={{ paddingLeft:0 }}>🍹 Bebidas</div>
               <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
                 {profile.drink_prefs.map(d => (
                   <span key={d} className="chip active-gold">{d}</span>
@@ -106,56 +117,79 @@ export default function ProfilePage() {
               </div>
             </div>
           )}
-          <button onClick={handleLogout} className="btn-glass">
+
+          <button onClick={() => signOut()} className="btn-glass">
             Cerrar sesion
           </button>
         </div>
       </div>
-      <BottomNav active="profile"/>
 
-      {/* Edit modal */}
+      <BottomNav active="profile" />
+
+      {/* Edit sheet */}
       {editing && (
         <div style={{
-          position:"fixed", inset:0, background:"rgba(6,6,12,0.96)",
-          backdropFilter:"blur(16px)", zIndex:200,
-          display:"flex", flexDirection:"column",
-          padding:"60px 0 0",
+          position:"fixed", inset:0,
+          background:"rgba(0,0,0,0.97)",
+          backdropFilter:"blur(20px)",
+          zIndex:200, display:"flex", flexDirection:"column",
         }}>
-          <div style={{ display:"flex", alignItems:"center", gap:12, padding:"0 20px 20px", borderBottom:"1px solid var(--border)" }}>
-            <button className="back-btn" onClick={() => setEditing(false)}>×</button>
-            <div style={{ flex:1, fontSize:17, fontWeight:800 }}>Editar perfil</div>
+          {/* Edit header */}
+          <div style={{
+            padding:"56px 20px 18px",
+            borderBottom:"1px solid var(--border)",
+            display:"flex", alignItems:"center", gap:12, flexShrink:0,
+          }}>
+            <button className="back-btn" onClick={() => setEditing(false)} style={{ fontSize:20 }}>×</button>
+            <div style={{ flex:1, fontSize:18, fontWeight:900 }}>Editar perfil</div>
             <button onClick={handleSave} disabled={saving} style={{
-              padding:"8px 18px", background:"var(--grad)", border:"none",
-              borderRadius:12, color:"#fff", fontSize:13, fontWeight:700,
+              padding:"9px 20px",
+              background: saving ? "var(--surface2)" : "var(--grad)",
+              border:"none", borderRadius:14,
+              color:"#fff", fontSize:13, fontWeight:800,
+              boxShadow: saving ? "none" : "var(--glow-pink)",
               opacity: saving ? 0.5 : 1,
             }}>
               {saving ? "..." : "Guardar"}
             </button>
           </div>
-          <div style={{ flex:1, overflowY:"auto", padding:"20px 20px 40px" }}>
+
+          <div style={{ flex:1, overflowY:"auto", padding:"22px 20px 48px" }}>
             <div className="input-group">
               <label>Nombre</label>
               <input value={form.name} onChange={e => setForm(f => ({...f, name:e.target.value}))} />
             </div>
             <div className="input-group">
               <label>Bio</label>
-              <textarea rows={3} value={form.bio} onChange={e => setForm(f => ({...f, bio:e.target.value}))} placeholder="Contate algo..." />
+              <textarea rows={3} value={form.bio}
+                onChange={e => setForm(f => ({...f, bio:e.target.value}))}
+                placeholder="Contate algo..." />
             </div>
-            <div style={{ marginBottom:24 }}>
-              <div className="section-label" style={{ paddingLeft:0 }}>Musica (max 3)</div>
+
+            <div style={{ marginBottom:28, marginTop:8 }}>
+              <div style={{ fontSize:16, fontWeight:900, marginBottom:4 }}>Musica</div>
+              <div style={{ fontSize:12, color:"var(--grayL)", marginBottom:14 }}>Hasta 3 generos</div>
               <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
                 {MUSIC.map(m => (
-                  <button key={m} type="button" onClick={() => toggleArr("music_prefs", m, 3)}
-                    className={"chip" + (form.music_prefs.includes(m) ? " active" : "")}>{m}</button>
+                  <button key={m} type="button"
+                    onClick={() => toggleArr("music_prefs", m, 3)}
+                    className={"chip" + (form.music_prefs.includes(m) ? " active" : "")}>
+                    {m}
+                  </button>
                 ))}
               </div>
             </div>
+
             <div>
-              <div className="section-label" style={{ paddingLeft:0 }}>Bebidas (max 3)</div>
+              <div style={{ fontSize:16, fontWeight:900, marginBottom:4 }}>Bebidas</div>
+              <div style={{ fontSize:12, color:"var(--grayL)", marginBottom:14 }}>Hasta 3</div>
               <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
                 {DRINKS.map(d => (
-                  <button key={d} type="button" onClick={() => toggleArr("drink_prefs", d, 3)}
-                    className={"chip" + (form.drink_prefs.includes(d) ? " active-gold" : "")}>{d}</button>
+                  <button key={d} type="button"
+                    onClick={() => toggleArr("drink_prefs", d, 3)}
+                    className={"chip" + (form.drink_prefs.includes(d) ? " active-gold" : "")}>
+                    {d}
+                  </button>
                 ))}
               </div>
             </div>
