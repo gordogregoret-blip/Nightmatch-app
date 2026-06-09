@@ -4,25 +4,33 @@ import { useAuth } from "../hooks/useAuth"
 import BottomNav from "../components/BottomNav"
 import { getActiveVenues, getTonightForVenue, checkIn, getCheckinStatus } from "../lib/supabase"
 
+// Carga inmediata con default BA, actualiza si geo responde en <3s
+function useLocation() {
+  const [loc, setLoc] = useState({ lat: -34.6037, lng: -58.3816 }) // Buenos Aires default
+  useEffect(() => {
+    if (!navigator.geolocation) return
+    const timer = setTimeout(() => {}, 0) // trigger immediately
+    const id = navigator.geolocation.watchPosition(
+      pos => setLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => {}, // silently ignore errors, keep default
+      { timeout: 3000, maximumAge: 60000 }
+    )
+    return () => navigator.geolocation.clearWatch(id)
+  }, [])
+  return loc
+}
+
 export default function FeedPage() {
   const { user } = useAuth()
   const nav = useNavigate()
+  const loc = useLocation()
   const [venues, setVenues]   = useState([])
   const [loading, setLoading] = useState(true)
-  const [loc, setLoc]         = useState(null)
 
   useEffect(() => {
-    navigator.geolocation?.getCurrentPosition(
-      pos => setLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      ()  => setLoc({ lat: -34.6, lng: -58.4 })
-    )
-  }, [])
-
-  useEffect(() => {
-    if (!loc) return
     const load = async () => {
       setLoading(true)
-      const { data } = await getActiveVenues(loc.lat, loc.lng, 30000)
+      const { data } = await getActiveVenues(loc.lat, loc.lng, 50000)
       if (data) {
         const enriched = await Promise.all(data.map(async v => {
           const { data: night } = await getTonightForVenue(v.id)
@@ -35,7 +43,7 @@ export default function FeedPage() {
       setLoading(false)
     }
     load()
-  }, [loc, user])
+  }, [loc.lat, loc.lng, user])
 
   const handleCheckin = async (venue, e) => {
     e.stopPropagation()
@@ -79,7 +87,7 @@ export default function FeedPage() {
           <div className="empty-state">
             <div className="icon">🌙</div>
             <h3>Sin boliches cercanos</h3>
-            <p>No hay venues activos en tu zona esta noche.</p>
+            <p>No hay venues activos en tu zona esta noche. Probá mas tarde.</p>
           </div>
         ) : (
           <div style={{ padding:"20px 16px 32px", display:"flex", flexDirection:"column", gap:12 }}>
@@ -103,22 +111,16 @@ function VenueCard({ venue, onCheckin, nav }) {
       style={{
         background:"var(--bg3)",
         border:"1px solid var(--border)",
-        borderRadius:24,
-        overflow:"hidden",
-        cursor:"pointer",
-        position:"relative",
+        borderRadius:24, overflow:"hidden",
+        cursor:"pointer", position:"relative",
       }}>
-
-      {/* Top accent line */}
       <div style={{
         height:2,
         background: night ? "var(--grad)" : "rgba(255,255,255,0.08)",
         boxShadow: night ? "var(--glow-pink)" : "none",
       }} />
-
       <div style={{ padding:"18px 18px 16px" }}>
         <div style={{ display:"flex", gap:14, alignItems:"flex-start" }}>
-          {/* Venue icon */}
           <div style={{
             width:56, height:56, borderRadius:18, flexShrink:0,
             background:"linear-gradient(135deg, rgba(233,30,140,0.15), rgba(124,58,237,0.15))",
@@ -126,7 +128,6 @@ function VenueCard({ venue, onCheckin, nav }) {
             display:"flex", alignItems:"center", justifyContent:"center",
             fontSize:26,
           }}>🏠</div>
-
           <div style={{ flex:1, minWidth:0 }}>
             <div style={{ fontSize:18, fontWeight:900, letterSpacing:-0.5, marginBottom:4 }}>
               {venue.name}
@@ -139,40 +140,30 @@ function VenueCard({ venue, onCheckin, nav }) {
               <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
                 <span className="badge badge-pink">🎵 {night.music_genre}</span>
                 {night.dj_name && <span className="badge badge-gold">🎧 {night.dj_name}</span>}
-                {night.checkin_count > 0 && (
-                  <span className="badge badge-purple">👥 {night.checkin_count}</span>
-                )}
+                {night.checkin_count > 0 && <span className="badge badge-purple">👥 {night.checkin_count}</span>}
               </div>
             ) : (
               <span className="badge badge-red">Sin noche activa</span>
             )}
           </div>
         </div>
-
-        {/* Cover price highlight */}
         {night?.cover_price > 0 && (
           <div style={{
             marginTop:14, padding:"10px 14px",
             background:"rgba(245,158,11,0.07)",
             border:"1px solid rgba(245,158,11,0.15)",
-            borderRadius:14, fontSize:13,
-            color:"var(--goldL)", fontWeight:600,
+            borderRadius:14, fontSize:13, color:"var(--goldL)", fontWeight:600,
           }}>
             🎟️ Entrada desde ${night.cover_price}
           </div>
         )}
-
-        {/* Actions */}
         <div style={{ display:"flex", gap:8, marginTop:14 }} onClick={e => e.stopPropagation()}>
           {night && (
             <button onClick={e => onCheckin(venue, e)} style={{
               flex:1, padding:"11px",
-              background: checked
-                ? "rgba(16,185,129,0.12)"
-                : "var(--grad)",
+              background: checked ? "rgba(16,185,129,0.12)" : "var(--grad)",
               border: checked ? "1px solid rgba(16,185,129,0.3)" : "none",
-              borderRadius:15,
-              color: checked ? "#6ee7b7" : "#fff",
+              borderRadius:15, color: checked ? "#6ee7b7" : "#fff",
               fontSize:13, fontWeight:800,
               boxShadow: checked ? "none" : "0 0 16px rgba(233,30,140,0.3)",
             }}>
@@ -181,11 +172,8 @@ function VenueCard({ venue, onCheckin, nav }) {
           )}
           <button onClick={() => nav("/venue/" + venue.id)} style={{
             padding:"11px 16px",
-            background:"var(--surface2)",
-            border:"1px solid var(--border2)",
-            borderRadius:15,
-            color:"var(--grayXL)",
-            fontSize:13, fontWeight:600,
+            background:"var(--surface2)", border:"1px solid var(--border2)",
+            borderRadius:15, color:"var(--grayXL)", fontSize:13, fontWeight:600,
           }}>Ver →</button>
         </div>
       </div>
