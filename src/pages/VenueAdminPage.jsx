@@ -6,6 +6,7 @@ import {
   getVenueEvents, createEvent, deleteEvent,
   getVenueAds, createAd, deleteAd,
   getPromosForNight, createPromo,
+  getFlyers, createFlyer, deleteFlyer,
   isVenueAdmin
 } from "../lib/supabase"
 
@@ -20,12 +21,14 @@ export default function VenueAdminPage() {
   const [events, setEvents] = useState([])
   const [ads, setAds]       = useState([])
   const [promos, setPromos] = useState([])
+  const [flyers, setFlyers] = useState([])
   const [tab, setTab]       = useState("noche")
   const [authorized, setAuthorized] = useState(false)
   const [nightForm, setNightForm] = useState({ music_genre:"House", dj_name:"", cover_price:"", open_time:"22:00", close_time:"06:00" })
   const [eventForm, setEventForm] = useState({ name:"", emoji:"🎉", start_time:"", description:"" })
   const [adForm, setAdForm]       = useState({ title:"", description:"" })
   const [promoForm, setPromoForm] = useState({ title:"", description:"", discount_pct:"" })
+  const [flyerForm, setFlyerForm] = useState({ title:"", description:"", image_url:"", valid_to:"" })
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -57,6 +60,8 @@ export default function VenueAdminPage() {
       }
       const { data: adsData } = await getVenueAds(venueId)
       setAds(adsData || [])
+      const { data: flyersData } = await getFlyers(venueId)
+      setFlyers(flyersData || [])
     }
     init()
   }, [venueId, user])
@@ -99,6 +104,19 @@ export default function VenueAdminPage() {
     setAds(a => a.filter(x => x.id !== id))
   }
 
+  const addFlyer = async () => {
+    if (!flyerForm.title.trim()) return
+    await createFlyer({ venue_id: venueId, ...flyerForm, is_active: true })
+    const { data } = await getFlyers(venueId)
+    setFlyers(data || [])
+    setFlyerForm({ title:"", description:"", image_url:"", valid_to:"" })
+  }
+
+  const removeFlyer = async (id) => {
+    await deleteFlyer(id)
+    setFlyers(f => f.filter(x => x.id !== id))
+  }
+
   const addPromo = async () => {
     if (!promoForm.title.trim() || !night) return
     await createPromo({ night_id: night.id, ...promoForm, discount_pct: promoForm.discount_pct ? parseInt(promoForm.discount_pct) : null })
@@ -129,8 +147,8 @@ export default function VenueAdminPage() {
           </div>
         </div>
 
-        <div style={{ display:"flex", margin:"0 16px 20px", gap:6 }}>
-          {["noche","eventos","promos","ads"].map(t => (
+        <div style={{ display:"flex", margin:"0 16px 20px", gap:4 }}>
+          {["noche","flyers","eventos","promos","ads"].map(t => (
             <button key={t} onClick={() => setTab(t)} style={{
               flex:1, padding:"9px 2px",
               background: tab===t ? "var(--grad-gold)" : "var(--surface)",
@@ -175,6 +193,51 @@ export default function VenueAdminPage() {
               <button className="btn-gold" onClick={saveNight} disabled={saving} style={{ marginTop:8 }}>
                 {saving ? "Guardando..." : night ? "Actualizar noche" : "Crear noche"}
               </button>
+            </div>
+          )}
+
+          {tab === "flyers" && (
+            <div>
+              <div style={{ fontSize:15, fontWeight:800, marginBottom:16 }}>Nuevo flyer</div>
+              <div className="input-group">
+                <label>Titulo</label>
+                <input placeholder="Noche del Viernes..." value={flyerForm.title} onChange={e => setFlyerForm(f => ({...f, title:e.target.value}))} />
+              </div>
+              <div className="input-group">
+                <label>Descripcion</label>
+                <input value={flyerForm.description} onChange={e => setFlyerForm(f => ({...f, description:e.target.value}))} />
+              </div>
+              <div className="input-group">
+                <label>URL de imagen (opcional)</label>
+                <input placeholder="https://..." value={flyerForm.image_url} onChange={e => setFlyerForm(f => ({...f, image_url:e.target.value}))} />
+              </div>
+              <div className="input-group">
+                <label>Válido hasta</label>
+                <input type="date" value={flyerForm.valid_to} onChange={e => setFlyerForm(f => ({...f, valid_to:e.target.value}))} />
+              </div>
+              <button className="btn-primary" onClick={addFlyer}>Publicar flyer</button>
+              {flyers.length > 0 && (
+                <div style={{ marginTop:24 }}>
+                  <div className="section-label" style={{ paddingLeft:0 }}>Flyers activos</div>
+                  {flyers.map(fl => (
+                    <div key={fl.id} style={{
+                      display:"flex", alignItems:"center", gap:12,
+                      padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)",
+                      borderRadius:14, marginBottom:8,
+                    }}>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontSize:14, fontWeight:700 }}>{fl.title}</div>
+                        {fl.description && <div style={{ fontSize:12, color:"var(--gray)", marginTop:2 }}>{fl.description}</div>}
+                        {fl.valid_to && <div style={{ fontSize:11, color:"var(--gray)", marginTop:2 }}>Hasta {fl.valid_to}</div>}
+                      </div>
+                      <button onClick={() => removeFlyer(fl.id)}
+                        style={{ background:"rgba(239,68,68,0.15)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:10, padding:"6px 12px", color:"#fca5a5", fontSize:12, fontWeight:700 }}>
+                        Borrar
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

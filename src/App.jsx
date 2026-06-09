@@ -6,10 +6,12 @@ import AuthPage       from './pages/AuthPage'
 import FeedPage       from './pages/FeedPage'
 import VenuePage      from './pages/VenuePage'
 import SwipePage      from './pages/SwipePage'
+import MatchesPage    from './pages/MatchesPage'
 import ChatsPage      from './pages/ChatsPage'
 import ChatPage       from './pages/ChatPage'
 import ProfilePage    from './pages/ProfilePage'
 import VenueAdminPage from './pages/VenueAdminPage'
+import SuperAdminPage from './pages/SuperAdminPage'
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
@@ -21,6 +23,18 @@ function PrivateRoute({ children }) {
   return user ? children : <Navigate to="/auth" replace />
 }
 
+function SuperAdminRoute({ children }) {
+  const { user, profile, loading } = useAuth()
+  if (loading) return (
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh' }}>
+      <div className="spinner" />
+    </div>
+  )
+  if (!user) return <Navigate to="/auth" replace />
+  if (profile?.role !== 'superadmin') return <Navigate to="/" replace />
+  return children
+}
+
 function AppRoutes() {
   const { user } = useAuth()
   return (
@@ -29,10 +43,12 @@ function AppRoutes() {
       <Route path="/" element={<PrivateRoute><FeedPage /></PrivateRoute>} />
       <Route path="/venue/:id" element={<PrivateRoute><VenuePage /></PrivateRoute>} />
       <Route path="/swipe/:venueId/:nightId" element={<PrivateRoute><SwipePage /></PrivateRoute>} />
+      <Route path="/matches" element={<PrivateRoute><MatchesPage /></PrivateRoute>} />
       <Route path="/chats" element={<PrivateRoute><ChatsPage /></PrivateRoute>} />
       <Route path="/chat/:matchId" element={<PrivateRoute><ChatPage /></PrivateRoute>} />
       <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
       <Route path="/venue-admin/:venueId" element={<PrivateRoute><VenueAdminPage /></PrivateRoute>} />
+      <Route path="/superadmin" element={<SuperAdminRoute><SuperAdminPage /></SuperAdminRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

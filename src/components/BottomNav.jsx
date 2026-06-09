@@ -1,8 +1,9 @@
 ﻿import { useNavigate } from "react-router-dom"
 
 const ITEMS = [
-  { id: "feed",    icon: "✦", label: "Boliches", path: "/" },
-  { id: "chats",   icon: "💘", label: "Matches",  path: "/chats" },
+  { id: "feed",    icon: "✦",  label: "Boliches", path: "/" },
+  { id: "matches", icon: "💘", label: "Matches",  path: "/matches" },
+  { id: "chats",   icon: "💬", label: "Chats",    path: "/chats" },
   { id: "profile", icon: "👤", label: "Perfil",   path: "/profile" },
 ]
 

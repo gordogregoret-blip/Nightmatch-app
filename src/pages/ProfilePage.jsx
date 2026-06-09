@@ -9,7 +9,7 @@ const DRINKS = ["Cerveza","Fernet","Whisky","Vodka","Gin","Vino","Champagne","Si
 
 export default function ProfilePage() {
   const nav = useNavigate()
-  const { user } = useAuth()
+  const { user, profile: authProfile } = useAuth()
   const [profile, setProfile] = useState(null)
   const [editing, setEditing] = useState(false)
   const [saving, setSaving]   = useState(false)
@@ -118,6 +118,24 @@ export default function ProfilePage() {
             </div>
           )}
 
+          {authProfile?.role === 'superadmin' && (
+            <button onClick={() => nav("/superadmin")} style={{
+              width:"100%", padding:"14px",
+              background:"linear-gradient(135deg, rgba(233,30,140,0.15), rgba(124,58,237,0.15))",
+              border:"1px solid rgba(233,30,140,0.35)",
+              borderRadius:16, color:"var(--pink)", fontSize:14, fontWeight:800,
+              marginBottom:10,
+            }}>⚡ Panel SuperAdmin</button>
+          )}
+          {(authProfile?.role === 'venue_admin' || authProfile?.role === 'superadmin') && (
+            <button onClick={() => nav("/")} style={{
+              width:"100%", padding:"14px",
+              background:"linear-gradient(135deg, rgba(245,158,11,0.12), rgba(234,179,8,0.08))",
+              border:"1px solid rgba(245,158,11,0.3)",
+              borderRadius:16, color:"var(--goldL)", fontSize:14, fontWeight:800,
+              marginBottom:10,
+            }}>🏠 Mis Boliches</button>
+          )}
           <button onClick={() => signOut()} className="btn-glass">
             Cerrar sesion
           </button>

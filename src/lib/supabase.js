@@ -239,6 +239,59 @@ export const sendMessage = async (matchId, senderId, content) => {
   return { data, error }
 }
 
+// ── Flyers ────────────────────────────────────────────────
+export const getFlyers = async (venueId) => {
+  const { data, error } = await supabase
+    .from('flyers')
+    .select('*')
+    .eq('venue_id', venueId)
+    .eq('is_active', true)
+    .order('created_at', { ascending: false })
+  return { data, error }
+}
+
+export const createFlyer = (data) =>
+  supabase.from('flyers').insert(data).select().single()
+
+export const deleteFlyer = (id) =>
+  supabase.from('flyers').update({ is_active: false }).eq('id', id)
+
+// ── SuperAdmin ────────────────────────────────────────────
+export const getAllVenues = async () => {
+  const { data, error } = await supabase
+    .from('venues')
+    .select('*')
+    .order('name')
+  return { data, error }
+}
+
+export const createVenue = (data) =>
+  supabase.from('venues').insert(data).select().single()
+
+export const getAllUsers = async () => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .order('created_at', { ascending: false })
+  return { data, error }
+}
+
+export const updateUserRole = (userId, role) =>
+  supabase.from('profiles').update({ role }).eq('id', userId)
+
+export const getVenueMetrics = async (venueId) => {
+  const [checkins, matches, likes] = await Promise.all([
+    supabase.from('checkins').select('id', { count: 'exact', head: true }).eq('venue_id', venueId),
+    supabase.from('matches').select('id', { count: 'exact', head: true }).eq('venue_id', venueId),
+    supabase.from('likes').select('id', { count: 'exact', head: true }).eq('venue_id', venueId),
+  ])
+  return {
+    checkins: checkins.count || 0,
+    matches: matches.count || 0,
+    likes: likes.count || 0,
+  }
+}
+
 // ── Realtime ──────────────────────────────────────────────
 export const subscribeToCheckins = (nightId, cb) =>
   supabase.channel(`checkins:${nightId}`)
