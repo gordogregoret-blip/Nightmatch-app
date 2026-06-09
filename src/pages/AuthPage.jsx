@@ -1,32 +1,26 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-const MUSIC_OPTIONS = ['Electrónica','House','Techno','Reggaeton','Trap','Cumbia','Pop','R&B']
+const MUSIC  = ['House','Techno','Reggaeton','Trap','Cumbia','Pop','R&B','Electronica']
+const DRINKS = ['Cerveza','Fernet','Whisky','Vodka','Gin','Vino','Champagne','Sin alcohol']
 
 export default function AuthPage() {
-  const [mode, setMode] = useState('login') // 'login' | 'register'
-  const [step, setStep] = useState(1)
+  const [mode, setMode]       = useState('login')
+  const [step, setStep]       = useState(1)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError]     = useState('')
+  const [form, setForm]       = useState({ email:'', password:'', name:'', age:'', music:[], drinks:[] })
 
-  const [form, setForm] = useState({
-    email: '', password: '', name: '', age: '', music: []
-  })
-
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
-
-  const toggleMusic = (m) => {
-    const cur = form.music
-    if (cur.includes(m)) set('music', cur.filter(x => x !== m))
-    else if (cur.length < 3) set('music', [...cur, m])
+  const set = (k,v) => setForm(f => ({ ...f, [k]: v }))
+  const toggleArr = (key, val, max) => {
+    const arr = form[key]
+    if (arr.includes(val)) set(key, arr.filter(x => x !== val))
+    else if (arr.length < max) set(key, [...arr, val])
   }
 
   const handleLogin = async (e) => {
-    e.preventDefault()
-    setLoading(true); setError('')
-    const { error } = await supabase.auth.signInWithPassword({
-      email: form.email, password: form.password
-    })
+    e.preventDefault(); setLoading(true); setError('')
+    const { error } = await supabase.auth.signInWithPassword({ email: form.email, password: form.password })
     if (error) setError(error.message)
     setLoading(false)
   }
@@ -35,60 +29,57 @@ export default function AuthPage() {
     e.preventDefault()
     if (step === 1) { setStep(2); return }
     setLoading(true); setError('')
-    const { data, error } = await supabase.auth.signUp({
-      email: form.email, password: form.password
-    })
+    const { data, error } = await supabase.auth.signUp({ email: form.email, password: form.password })
     if (error) { setError(error.message); setLoading(false); return }
     if (data.user) {
       await supabase.from('profiles').insert({
-        id: data.user.id,
-        name: form.name,
-        age: parseInt(form.age),
-        music_prefs: form.music
+        id: data.user.id, name: form.name, age: parseInt(form.age),
+        music_prefs: form.music, drink_prefs: form.drinks,
       })
     }
     setLoading(false)
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Hero */}
+    <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column', background:'var(--bg)' }}>
       <div style={{
-        background: 'linear-gradient(180deg,#1a1035 0%,var(--dark) 100%)',
-        padding: '48px 24px 28px', textAlign: 'center'
+        padding: '72px 28px 40px',
+        background: 'radial-gradient(ellipse at 50% 0%, rgba(168,85,247,0.22) 0%, transparent 70%)',
+        textAlign: 'center',
       }}>
-        <div style={{ fontSize: 42, fontWeight: 800, letterSpacing: -1 }}>
-          Night<span style={{ color: 'var(--purple)' }}>Match</span>
+        <div style={{ fontSize:11, fontWeight:800, letterSpacing:3.5, color:'var(--gray)', textTransform:'uppercase', marginBottom:16 }}>
+          BIENVENIDO A
         </div>
-        <div style={{ fontSize: 14, color: 'var(--grayL)', marginTop: 10, lineHeight: 1.6 }}>
-          Conectate con personas que van<br />al mismo lugar que vos esta noche.
+        <div style={{ fontSize:52, fontWeight:900, letterSpacing:-2.5, lineHeight:1 }}>
+          Night<span className="grad-text">Match</span>
+        </div>
+        <div style={{ fontSize:14, color:'var(--gray)', marginTop:16, lineHeight:1.7 }}>
+          Conectate con personas que van<br/>al mismo boliche que vos esta noche
         </div>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', margin: '0 24px', gap: 8 }}>
+      <div style={{ display:'flex', margin:'0 24px 28px', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:18, padding:4 }}>
         {['login','register'].map(m => (
           <button key={m} onClick={() => { setMode(m); setStep(1); setError('') }}
             style={{
-              flex: 1, padding: '10px', borderRadius: 12, border: 'none',
-              background: mode === m ? 'var(--purple)' : 'var(--cardB)',
-              color: mode === m ? '#fff' : 'var(--gray)',
-              fontWeight: mode === m ? 600 : 400, fontSize: 14
+              flex:1, padding:'12px', borderRadius:15, border:'none',
+              background: mode===m ? 'var(--grad)' : 'transparent',
+              color: mode===m ? '#fff' : 'var(--gray)',
+              fontWeight:700, fontSize:13, transition:'all 0.2s',
             }}>
-            {m === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
+            {m === 'login' ? 'Iniciar sesion' : 'Crear cuenta'}
           </button>
         ))}
       </div>
 
-      {/* Form */}
-      <form onSubmit={mode === 'login' ? handleLogin : handleRegister}
-        style={{ padding: '20px 24px', flex: 1 }}>
+      <form onSubmit={mode==='login' ? handleLogin : handleRegister}
+        style={{ padding:'0 24px 48px', flex:1 }}>
 
         {error && (
           <div style={{
-            background: 'rgba(255,77,109,.1)', border: '1px solid rgba(255,77,109,.3)',
-            borderRadius: 10, padding: '10px 14px', fontSize: 13,
-            color: 'var(--red)', marginBottom: 14
+            background:'rgba(239,68,68,0.1)', border:'1px solid rgba(239,68,68,0.3)',
+            borderRadius:14, padding:'12px 16px', fontSize:13, color:'#fca5a5',
+            marginBottom:18, lineHeight:1.4,
           }}>{error}</div>
         )}
 
@@ -99,7 +90,7 @@ export default function AuthPage() {
               value={form.email} onChange={e => set('email', e.target.value)} />
           </div>
           <div className="input-group">
-            <label>Contraseña</label>
+            <label>Contrasena</label>
             <input type="password" required placeholder="••••••••"
               value={form.password} onChange={e => set('password', e.target.value)} />
           </div>
@@ -112,45 +103,55 @@ export default function AuthPage() {
               value={form.name} onChange={e => set('name', e.target.value)} />
           </div>
           <div className="input-group">
+            <label>Edad</label>
+            <input type="number" required min={18} max={99} placeholder="18+"
+              value={form.age} onChange={e => set('age', e.target.value)} />
+          </div>
+          <div className="input-group">
             <label>Email</label>
             <input type="email" required placeholder="tu@email.com"
               value={form.email} onChange={e => set('email', e.target.value)} />
           </div>
           <div className="input-group">
-            <label>Contraseña</label>
-            <input type="password" required minLength={6} placeholder="Mínimo 6 caracteres"
+            <label>Contrasena</label>
+            <input type="password" required minLength={6} placeholder="Minimo 6 caracteres"
               value={form.password} onChange={e => set('password', e.target.value)} />
-          </div>
-          <div className="input-group">
-            <label>Edad</label>
-            <input type="number" required min={18} max={99} placeholder="Tu edad"
-              value={form.age} onChange={e => set('age', e.target.value)} />
           </div>
         </>}
 
         {mode === 'register' && step === 2 && <>
-          <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>¿Qué música te gusta?</div>
-          <div style={{ fontSize: 13, color: 'var(--gray)', marginBottom: 16 }}>
-            Elegí hasta 3 — te mostramos personas con gustos similares
+          <div style={{ marginBottom:28 }}>
+            <div style={{ fontSize:20, fontWeight:800, letterSpacing:-0.6, marginBottom:6 }}>
+              Que musica te gusta?
+            </div>
+            <div style={{ fontSize:13, color:'var(--gray)', marginBottom:16 }}>Elegi hasta 3</div>
+            <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+              {MUSIC.map(m => (
+                <button key={m} type="button" onClick={() => toggleArr('music', m, 3)}
+                  className={'chip' + (form.music.includes(m) ? ' active' : '')}>{m}</button>
+              ))}
+            </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {MUSIC_OPTIONS.map(m => (
-              <div key={m} onClick={() => toggleMusic(m)}
-                style={{
-                  padding: '11px 8px', textAlign: 'center', borderRadius: 12,
-                  border: `1px solid ${form.music.includes(m) ? 'var(--purple)' : 'var(--border)'}`,
-                  background: form.music.includes(m) ? 'rgba(108,99,255,.15)' : 'var(--cardB)',
-                  color: form.music.includes(m) ? 'var(--purpleL)' : 'var(--grayL)',
-                  fontSize: 13, cursor: 'pointer', transition: 'all .15s'
-                }}>{m}</div>
-            ))}
+          <div style={{ marginBottom:28 }}>
+            <div style={{ fontSize:20, fontWeight:800, letterSpacing:-0.6, marginBottom:6 }}>
+              Que tomas?
+            </div>
+            <div style={{ fontSize:13, color:'var(--gray)', marginBottom:16 }}>Elegi hasta 3</div>
+            <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+              {DRINKS.map(d => (
+                <button key={d} type="button" onClick={() => toggleArr('drinks', d, 3)}
+                  className={'chip' + (form.drinks.includes(d) ? ' active-gold' : '')}>{d}</button>
+              ))}
+            </div>
           </div>
         </>}
 
-        <button className="btn-primary" type="submit" disabled={loading}
-          style={{ marginTop: 20 }}>
-          {loading ? '...' : mode === 'login' ? 'Entrar' : step === 1 ? 'Continuar →' : 'Crear cuenta'}
+        <button className="btn-primary" type="submit" disabled={loading} style={{ marginTop:8 }}>
+          {loading ? '...' : mode==='login' ? 'Entrar' : step===1 ? 'Continuar' : 'Crear cuenta'}
         </button>
+        {mode==='register' && step===2 && (
+          <button type="button" onClick={() => setStep(1)} className="btn-glass" style={{ marginTop:12 }}>Volver</button>
+        )}
       </form>
     </div>
   )
